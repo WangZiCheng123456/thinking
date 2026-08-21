@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>焦氏易林 · 孟喜卦气占筮</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<header class="site-header">
+  <div class="header-ornament">☰ ☱ ☲ ☳ ☴ ☵ ☶ ☷</div>
+  <h1>焦 氏 易 林</h1>
+  <p class="subtitle">西汉 · 焦延寿著　四千零九十六林辞　孟喜卦气占筮</p>
+</header>
+
+<nav class="tabs" id="tabs">
+  <button class="tab active" data-tab="guaqi">卦气起卦</button>
+  <button class="tab" data-tab="manual">手动摇卦</button>
+  <button class="tab" data-tab="coins">铜钱摇卦</button>
+  <button class="tab" data-tab="query">查询林辞</button>
+  <button class="tab" data-tab="contact">更多</button>
+  <button class="tab" data-tab="about">关于</button>
+</nav>
+
+<main>
+
+  <!-- ============ 孟喜卦气时间起卦 ============ -->
+  <section id="tab-guaqi" class="panel active">
+    <div class="card">
+      <h2>孟喜卦气 · 时间起卦</h2>
+      <p class="hint">
+        依孟喜《卦气图》「六日七分」之法：坎、离、震、兑四正卦分掌冬至、夏至、
+        春分、秋分四日；其余六十卦自冬至起各值六日七分，值日之卦即为本卦。
+        之卦可随机取，亦可自行拣选。
+      </p>
+      <div class="form-row">
+        <label class="field">公历日期
+          <input type="date" id="gq-date">
+        </label>
+        <label class="field">时辰
+          <select id="gq-hour"></select>
+        </label>
+        <label class="field">之卦
+          <select id="gq-bian-method">
+            <option value="random" selected>随机</option>
+            <option value="pick">自选</option>
+          </select>
+        </label>
+      </div>
+      <div class="form-row">
+        <div class="manual-slot" id="gq-slot-bian" hidden>
+          <span class="slot-label">之卦（自选）</span>
+          <span class="slot-value" id="gq-slot-bian-val">点选以择卦</span>
+        </div>
+      </div>
+      <div class="form-row">
+        <button id="btn-guaqi" class="primary">起 卦</button>
+        <button id="btn-now" class="secondary">使用当前时间</button>
+      </div>
+      <div id="gq-result"></div>
+    </div>
+  </section>
+
+  <!-- ============ 手动摇卦 ============ -->
+  <section id="tab-manual" class="panel">
+    <div class="card">
+      <h2>手动摇卦 · 铜钱起卦</h2>
+      <p class="hint">
+        1. 取三枚相同面值的硬币；<br>
+        2. 双手捧币于手心，诚心默想所测之事（一次只问一件事）；<br>
+        3. 约十秒后摇币数下，抛于平面上（掉落地上也照常记录，途中勿用手接或干预）；<br>
+        4. 依序摇掷六次，由下至上记录每一爻；<br>
+        5. 得本卦与之卦，查《焦氏易林》林辞，以断吉凶。
+      </p>
+      <p class="hint">摇毕六爻后，于下方卦盘中拣选所成的本卦与之卦，再查林辞。</p>
+      <div class="manual-slot-row">
+        <div class="manual-slot" id="slot-ben" data-target="ben">
+          <span class="slot-label">本卦</span>
+          <span class="slot-value" id="slot-ben-val">点选以择卦</span>
+        </div>
+        <div class="manual-arrow">⟶</div>
+        <div class="manual-slot" id="slot-bian" data-target="bian">
+          <span class="slot-label">之卦</span>
+          <span class="slot-value" id="slot-bian-val">点选以择卦</span>
+        </div>
+      </div>
+      <div class="form-row">
+        <button id="btn-manual-query" class="primary">查询林辞</button>
+        <button id="btn-manual-clear" class="secondary">清空</button>
+      </div>
+      <div id="manual-result"></div>
+    </div>
+  </section>
+
+  <!-- ============ 铜钱摇卦 ============ -->
+  <section id="tab-coins" class="panel">
+    <div class="card">
+      <h2>铜钱摇卦 · 六爻成卦</h2>
+      <p class="hint">
+        程序模拟三枚铜钱摇卦：背为阳、字为阴，三背为老阳（动）、二背为少阳、一背为少阴、三字为老阴（动），动爻变后得之卦。点击「摇卦」逐爻掷出，或「自动连摇六次」一次成卦。
+      </p>
+      <div class="coin-stage" id="coin-stage">
+        <div class="coin-line-holder"></div>
+      </div>
+      <div class="coin-actions">
+        <button id="btn-toss" class="primary">摇 卦</button>
+        <button id="btn-auto" class="secondary">自动连摇六次</button>
+        <button id="btn-reset" class="secondary">重 置</button>
+      </div>
+      <div id="coin-result"></div>
+    </div>
+  </section>
+
+  <!-- ============ 查询林辞 ============ -->
+  <section id="tab-query" class="panel">
+    <div class="card">
+      <h2>查询林辞</h2>
+      <p class="hint">
+        本卦与之卦皆可留空：两者皆填查单一组合；仅填本卦查「某卦为本卦」之全部林辞；仅填之卦查「某卦为之卦」之全部林辞；两者皆空则列出全部四千零九十六首。批次查询不显示卦象，仅列林辞与译文，并于每条左上角标注「本卦之之卦」。
+      </p>
+      <div class="form-row">
+        <label class="field">本卦（可留空）
+          <select id="q-bengua"></select>
+        </label>
+        <label class="field">之卦（可留空）
+          <select id="q-biangua"></select>
+        </label>
+        <button id="btn-query" class="primary">查 询</button>
+      </div>
+      <div id="query-result"></div>
+    </div>
+    <div class="card">
+      <h2>全文检索</h2>
+      <input type="text" id="q-search" placeholder="输入关键词，检索林辞与译文……">
+      <div id="search-result"></div>
+    </div>
+  </section>
+
+  <!-- ============ 更多 ============ -->
+  <section id="tab-contact" class="panel">
+    <div class="card">
+      <h2>更多</h2>
+      <div class="contact-grid">
+        <div class="contact-item">
+          <div class="contact-icon">💬</div>
+          <div class="contact-label">微信</div>
+          <div class="contact-value">pengyidr</div>
+          <button type="button" class="contact-copy" data-copy="pengyidr">复制微信号</button>
+        </div>
+        <div class="contact-item">
+          <div class="contact-icon">✉️</div>
+          <div class="contact-label">邮箱（163）</div>
+          <div class="contact-value">wzc20070515@163.com</div>
+          <div class="contact-actions">
+            <a class="contact-copy" href="mailto:wzc20070515@163.com">发送邮件</a>
+            <button type="button" class="contact-copy" data-copy="wzc20070515@163.com">复制邮箱</button>
+          </div>
+        </div>
+        <div class="contact-item">
+          <div class="contact-icon">✉️</div>
+          <div class="contact-label">邮箱（QQ）</div>
+          <div class="contact-value">1477247492@qq.com</div>
+          <div class="contact-actions">
+            <a class="contact-copy" href="mailto:1477247492@qq.com">发送邮件</a>
+            <button type="button" class="contact-copy" data-copy="1477247492@qq.com">复制邮箱</button>
+          </div>
+        </div>
+      </div>
+      <p class="contact-note">微信：pengyidr　｜　邮箱：wzc20070515@163.com　｜　邮箱：1477247492@qq.com</p>
+    </div>
+  </section>
+
+  <!-- ============ 关于 ============ -->
+  <section id="tab-about" class="panel">
+    <div class="card">
+      <h2>关于焦氏易林</h2>
+      <p>
+        《焦氏易林》为西汉焦延寿（名赣，梁人）所撰，以六十四卦中每一卦
+        复变六十四卦，共四千零九十六首林辞，占断人事吉凶、时势休咎，辞多
+        韵语，上探三古，下逮两汉，被誉为「易林万策」。
+      </p>
+      <h2>孟喜卦气说</h2>
+      <p>
+        孟喜为汉代易学「卦气」之祖。其说以坎、离、震、兑四正卦分主
+        冬、夏、春、秋，余六十卦与一年三百六十五又四分之一日相配，
+        每卦各值「六日七分」，周流值日，是为卦气。十二辟卦（消息卦）
+        又与十二月、十二时辰相应。
+      </p>
+      <h2>本页起卦规则</h2>
+      <ul>
+        <li><b>时间起卦</b>：以太阳黄经推算节气，坎、离、震、兑四正卦分掌冬至、夏至、
+        春分、秋分四日；其余日期按「六日七分」自冬至起算，得值日卦为本卦。
+        之卦可随机取，亦可自行拣选。</li>
+        <li><b>手动摇卦</b>：依铜钱摇卦法手摇六次成卦，再于六十四卦盘中拣选本卦与之卦。</li>
+        <li><b>铜钱摇卦</b>：程序模拟三枚铜钱摇六次，老阳老阴为动爻，动爻变后得之卦。</li>
+      </ul>
+      <p class="disclaimer">
+        本页为传统文化学习与娱乐参考之用，其占断内容不具科学依据，请理性看待。
+      </p>
+    </div>
+  </section>
+
+</main>
+
+<footer class="site-footer">
+  <div>焦氏易林 · 孟喜卦气 · 四千零九十六林辞</div>
+  <div>整理人：两头鹅　特别鸣谢：鹏夷道人</div>
+</footer>
+
+<div class="picker-overlay" id="picker-overlay" hidden>
+  <div class="picker-panel">
+    <div class="picker-title" id="picker-title">择卦</div>
+    <div class="picker-grid" id="picker-grid"></div>
+    <button class="secondary" id="btn-picker-close">关闭</button>
+  </div>
+</div>
+
+<!-- 免责声明弹窗 -->
+<div class="disclaimer-overlay" id="disclaimer-overlay">
+  <div class="disclaimer-modal">
+    <h2>免 责 声 明</h2>
+    <div class="disclaimer-body">
+      <p>本网站之起卦、占断、林辞解读等内容，皆为中国传统文化之学习、研究与娱乐参考之用。</p>
+      <p>网站所载卦气、易林等内容源自古籍整理，不具科学依据，不代表任何现实预测、保证或建议。</p>
+      <p>请理性看待占断结果，勿以之作为重大决策依据，亦勿过度沉迷。</p>
+    </div>
+    <button type="button" class="primary" id="btn-disclaimer-ok">我已阅读并同意</button>
+  </div>
+</div>
+
+<script src="js/hexagrams.js"></script>
+<script src="js/data.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
