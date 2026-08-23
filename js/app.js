@@ -59,7 +59,7 @@ function ensureData(cb) {
 }
 
 /* ---------- 林辭结果渲染（共享） ---------- */
-function renderYiLinResult(ben, bian, container, infoLines) {
+function renderYiLinResult(ben, bian, container, infoLines, meta) {
   var rec = findLinCi(ben, bian);
   var hBen = HEXAGRAMS[HEX_INDEX[ben]] || {};
   var hBian = HEXAGRAMS[HEX_INDEX[bian]] || {};
@@ -87,6 +87,7 @@ function renderYiLinResult(ben, bian, container, infoLines) {
     html += '<p class="warn">未找到「' + ben + '之' + bian + '」的林辞记录，或数据未载入。</p>';
   }
   container.innerHTML = html;
+  if (meta) appendSaveBar(container, meta);
 }
 
 /* ---------- 标签页 ---------- */
@@ -212,7 +213,13 @@ function runGuaQi() {
   }
   info.push(bianLabel);
 
-  renderYiLinResult(ben, bian, out, info);
+  renderYiLinResult(ben, bian, out, info, {
+    method: '时间起卦',
+    ben: ben,
+    bian: bian,
+    info: info,
+    moving: null
+  });
 }
 
 /* ---------- 手动选卦 ---------- */
@@ -234,7 +241,13 @@ function setupManual() {
       document.getElementById('manual-result').innerHTML = '<p class="warn">请先选定本卦与之卦。</p>';
       return;
     }
-    renderYiLinResult(manualState.ben, manualState.bian, document.getElementById('manual-result'));
+    renderYiLinResult(manualState.ben, manualState.bian, document.getElementById('manual-result'), [], {
+      method: '手动摇卦',
+      ben: manualState.ben,
+      bian: manualState.bian,
+      info: [],
+      moving: null
+    });
   });
   updateManualSlots();
 }
@@ -425,6 +438,13 @@ function renderCoinResult(ben, bian, moving, infoLines) {
     html += '<p class="warn">未找到「' + ben + '之' + bian + '」的林辞记录。</p>';
   }
   container.innerHTML = html;
+  appendSaveBar(container, {
+    method: '铜钱摇卦',
+    ben: ben,
+    bian: bian,
+    info: infoLines,
+    moving: moving
+  });
 }
 
 /* ---------- 查询林辞 ---------- */
@@ -548,6 +568,158 @@ function doSearch() {
   container.innerHTML = html;
 }
 
+/* ---------- 保存记录（localStorage） ---------- */
+var SAVE_KEY = 'yilin_saved_records';
+
+function loadSaved() {
+  try { return JSON.parse(localStorage.getItem(SAVE_KEY) || '[]'); }
+  catch (e) { return []; }
+}
+function saveList(list) {
+  try { localStorage.setItem(SAVE_KEY, JSON.stringify(list)); }
+  catch (e) { /* 存储不可用时静默忽略 */ }
+}
+function formatSavedTime(d) {
+  return d.getFullYear() + '年' + (d.getMonth() + 1) + '月' + d.getDate() + '日 '
+    + pad2(d.getHours()) + ':' + pad2(d.getMinutes());
+}
+function flashSave(btn, text) {
+  var old = btn.textContent;
+  btn.textContent = text;
+  btn.style.color = '#1d6b3c';
+  setTimeout(function () {
+    btn.textContent = old;
+    btn.style.color = '';
+  }, 1500);
+}
+
+/* 在结果容器下方附加「所问之事 + 保存」条 */
+function appendSaveBar(container, data) {
+  var bar = document.createElement('div');
+  bar.className = 'save-bar';
+  bar.innerHTML =
+    '<input type="text" class="save-question" placeholder="所问何事？如：此行是否顺利、此事成败若何……">' +
+    '<button type="button" class="primary">保存此卦</button>';
+  var input = bar.querySelector('.save-question');
+  var btn = bar.querySelector('button');
+  btn.addEventListener('click', function () {
+    var q = input.value.trim();
+    if (!q) {
+      input.focus();
+      input.style.borderColor = '#c05555';
+      flashSave(btn, '请先填写所问之事');
+      return;
+    }
+    var rec = findLinCi(data.ben, data.bian);
+    var record = {
+      id: 'r' + Date.now() + '_' + Math.floor(Math.random() * 10000),
+      savedAt: formatSavedTime(new Date()),
+      method: data.method,
+      question: q,
+      ben: data.ben,
+      bian: data.bian,
+      linci: rec ? (rec['林辞'] || '') : '',
+      trans: rec ? (rec['翻译'] || '') : '',
+      info: data.info || [],
+      moving: data.moving || null
+    };
+    saveRecord(record);
+    input.style.borderColor = '';
+    flashSave(btn, '已保存 ✓');
+  });
+  container.appendChild(bar);
+}
+
+function saveRecord(record) {
+  var list = loadSaved();
+  list.unshift(record);
+  saveList(list);
+  updateRecordsCount();
+  drawRecords();
+}
+function deleteRecord(id) {
+  var list = loadSaved().filter(function (r) { return r.id !== id; });
+  saveList(list);
+  updateRecordsCount();
+  drawRecords();
+}
+function clearRecords() {
+  if (!loadSaved().length) return;
+  if (!window.confirm('确定清空全部保存记录吗？')) return;
+  saveList([]);
+  updateRecordsCount();
+  drawRecords();
+}
+function updateRecordsCount() {
+  var tab = document.querySelector('.tab[data-tab="records"]');
+  if (tab) tab.textContent = '我的记录（' + loadSaved().length + '）';
+}
+
+/* 渲染「我的记录」列表 */
+function drawRecords() {
+  var container = document.getElementById('records-list');
+  if (!container) return;
+  var list = loadSaved();
+  if (!list.length) {
+    container.innerHTML =
+      '<div class="record-empty">暂无保存记录。起卦得断后，点结果下方的「保存此卦」即可存入此处。</div>';
+    return;
+  }
+  var html = '';
+  for (var i = 0; i < list.length; i++) {
+    var r = list[i];
+    var hBen = HEXAGRAMS[HEX_INDEX[r.ben]] || {};
+    var hBian = HEXAGRAMS[HEX_INDEX[r.bian]] || {};
+    html += '<div class="record-item">';
+    html += '<div class="record-head">'
+      + '<span class="record-tag">' + esc(r.method || '') + '</span>'
+      + '<span class="record-time">保存于 ' + esc(r.savedAt || '') + '</span>'
+      + '<button type="button" class="record-del" data-id="' + esc(r.id) + '">删除</button>'
+      + '</div>';
+    html += '<div class="record-question"><b>所问之事：</b>' + esc(r.question || '') + '</div>';
+    html += '<div class="result-grid">';
+    html += '<div class="hex-card"><div>' + hexSymbolHTML(r.ben, '', r.moving) + '</div>'
+      + '<div class="hex-name">' + r.ben + '</div>'
+      + '<div class="hex-xiang">' + hexXiang(r.ben) + '</div>'
+      + '<div class="hex-meaning">' + (hBen.m || '') + '</div></div>';
+    html += '<div class="arrow">⟶</div>';
+    html += '<div class="hex-card"><div>' + hexSymbolHTML(r.bian) + '</div>'
+      + '<div class="hex-name">' + r.bian + '</div>'
+      + '<div class="hex-xiang">' + hexXiang(r.bian) + '</div>'
+      + '<div class="hex-meaning">' + (hBian.m || '') + '</div></div>';
+    html += '</div>';
+    if (r.info && r.info.length) {
+      html += '<div class="info-lines">' + r.info.join('<br>') + '</div>';
+    }
+    if (r.linci) {
+      html += '<div class="linci"><div class="linci-label">林 辞</div>'
+        + '<p class="linci-text">' + esc(r.linci) + '</p>';
+      if (r.trans) {
+        html += '<div class="linci-label">译 文</div>'
+          + '<p class="linci-trans">' + esc(r.trans) + '</p>';
+      }
+      html += '</div>';
+    }
+    html += '</div>';
+  }
+  container.innerHTML = html;
+  var delBtns = container.querySelectorAll('.record-del');
+  for (var j = 0; j < delBtns.length; j++) {
+    (function (b) {
+      b.addEventListener('click', function () {
+        deleteRecord(b.getAttribute('data-id'));
+      });
+    })(delBtns[j]);
+  }
+}
+
+function setupRecords() {
+  var clearBtn = document.getElementById('btn-records-clear');
+  if (clearBtn) clearBtn.addEventListener('click', clearRecords);
+  updateRecordsCount();
+  drawRecords();
+}
+
 /* ---------- 联系我们 ---------- */
 function setupContact() {
   var items = document.querySelectorAll('.contact-copy[data-copy]');
@@ -608,6 +780,7 @@ function initAll() {
   setupManual();
   setupCoins();
   setupQuery();
+  setupRecords();
   setupContact();
   setupDisclaimer();
 }

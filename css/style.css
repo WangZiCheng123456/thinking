@@ -422,10 +422,11 @@ button.secondary:hover { border-color: var(--gold); color: var(--gold-deep); }
 .search-summary { color: var(--ink-soft); font-size: 14px; margin-top: 10px; text-align: center; }
 mark { background: #f3d478; color: #4a3308; border-radius: 2px; padding: 0 2px; }
 
-/* ---------- 关于 ---------- */
-#tab-about p { margin-bottom: 10px; text-align: justify; }
-#tab-about ul { margin: 6px 0 12px 22px; }
-#tab-about li { margin-bottom: 6px; }
+/* ---------- 关于（并入「更多 · 关于」） ---------- */
+#tab-contact p { margin-bottom: 10px; text-align: justify; }
+#tab-contact ul { margin: 6px 0 12px 22px; }
+#tab-contact li { margin-bottom: 6px; }
+#tab-contact .contact-note { text-align: center; }
 .disclaimer {
   margin-top: 16px;
   color: var(--ink-soft);
@@ -433,6 +434,34 @@ mark { background: #f3d478; color: #4a3308; border-radius: 2px; padding: 0 2px; 
   border-top: 1px dashed var(--line);
   padding-top: 12px;
 }
+
+/* ---------- 使用方法 ---------- */
+.guide-step {
+  display: flex;
+  gap: 14px;
+  margin-bottom: 16px;
+  padding: 14px 16px;
+  background: rgba(168,137,63,.06);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+}
+.guide-num {
+  flex: 0 0 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: linear-gradient(180deg, #9c3a3a, #7e2929);
+  color: #f7ead2;
+  font-size: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.guide-body { flex: 1; min-width: 0; }
+.guide-body h3 { font-size: 17px; color: var(--red); margin-bottom: 6px; letter-spacing: .06em; }
+.guide-body p { font-size: 14px; color: var(--ink-soft); text-align: justify; margin-bottom: 6px; }
+.guide-body ul { margin: 4px 0 6px 20px; }
+.guide-body li { font-size: 14px; color: var(--ink-soft); margin-bottom: 6px; text-align: justify; }
+.guide-body b { color: var(--ink); }
 
 /* ---------- 免责声明弹窗 ---------- */
 .disclaimer-overlay {
@@ -533,6 +562,76 @@ mark { background: #f3d478; color: #4a3308; border-radius: 2px; padding: 0 2px; 
   letter-spacing: .08em;
 }
 
+/* ---------- 保存 ---------- */
+.save-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  justify-content: center;
+  margin: 16px auto 4px;
+  max-width: 680px;
+  background: rgba(168,137,63,.07);
+  border: 1px dashed var(--line);
+  border-radius: 8px;
+  padding: 10px 14px;
+}
+.save-bar input { flex: 1 1 260px; margin-top: 0; }
+.save-bar .primary { white-space: nowrap; }
+
+/* ---------- 我的记录 ---------- */
+.records-tools { text-align: center; margin-bottom: 12px; }
+.record-empty {
+  text-align: center;
+  color: var(--ink-soft);
+  font-size: 14px;
+  padding: 34px 12px;
+  border: 1px dashed var(--line);
+  border-radius: 10px;
+}
+.record-item {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: linear-gradient(180deg, #fffdf4, #f8efd8);
+  padding: 16px 18px;
+  margin-bottom: 16px;
+  box-shadow: 0 3px 10px rgba(138,109,47,.10);
+}
+.record-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  border-bottom: 1px dashed var(--line);
+  padding-bottom: 10px;
+  margin-bottom: 10px;
+}
+.record-tag {
+  font-size: 12px;
+  color: var(--red);
+  background: rgba(140,47,47,.07);
+  border: 1px solid rgba(140,47,47,.22);
+  border-radius: 999px;
+  padding: 1px 12px;
+  letter-spacing: .1em;
+}
+.record-time { font-size: 13px; color: var(--ink-soft); }
+.record-del {
+  margin-left: auto;
+  font-size: 13px;
+  padding: 4px 16px;
+  letter-spacing: .08em;
+  background: #f8e8e0;
+  color: var(--red);
+  border-color: #d8b0a0;
+}
+.record-del:hover { background: #f0d8cc; border-color: var(--red); }
+.record-question { font-size: 16px; color: var(--ink); margin-bottom: 4px; }
+.record-question b { color: var(--red); }
+.record-item .result-grid { margin: 10px 0 4px; }
+.record-item .info-lines { margin: 8px auto; }
+.record-item .linci { margin: 10px auto 0; }
+
 /* ---------- 页脚 ---------- */
 .site-footer {
   text-align: center;
@@ -603,6 +702,19 @@ mark { background: #f3d478; color: #4a3308; border-radius: 2px; padding: 0 2px; 
   .contact-item { padding: 16px 10px; }
   .contact-value { font-size: 16px; }
   .contact-note { font-size: 12px; }
+
+  .guide-step { padding: 12px; gap: 10px; }
+  .guide-num { flex: 0 0 32px; height: 32px; font-size: 15px; }
+  .guide-body h3 { font-size: 16px; }
+  .guide-body p, .guide-body li { font-size: 13px; }
+
+  .save-bar { padding: 8px 10px; }
+  .save-bar input { flex: 1 1 100%; }
+
+  .record-item { padding: 12px; }
+  .record-head { gap: 6px 8px; }
+  .record-del { margin-left: 0; }
+  .record-question { font-size: 15px; }
 
   .disclaimer-modal { padding: 20px 18px; }
   .disclaimer-body p { font-size: 14px; }
