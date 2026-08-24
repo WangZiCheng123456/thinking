@@ -450,26 +450,96 @@ function renderCoinResult(ben, bian, moving, infoLines) {
 /* ---------- 查询林辞 ---------- */
 var QLIST_STATE = { all: [], shown: 0 };
 
-function setupQuery() {
-  var benSel = document.getElementById('q-bengua');
-  var bianSel = document.getElementById('q-biangua');
-  var oEmpty1 = document.createElement('option');
-  oEmpty1.value = ''; oEmpty1.textContent = '全部（不限）';
-  benSel.appendChild(oEmpty1);
-  var oEmpty2 = document.createElement('option');
-  oEmpty2.value = ''; oEmpty2.textContent = '全部（不限）';
-  bianSel.appendChild(oEmpty2);
+/* 卦名识别：支持键入卦名或卦象称谓（如「天风姤」）；留空返回 ''，未识别返回 null */
+function resolveHexName(raw) {
+  var s = (raw || '').trim();
+  if (!s) return '';
+  if (Object.prototype.hasOwnProperty.call(HEX_INDEX, s)) return s;
+  for (var i = 0; i < KING_WEN_ORDER.length; i++) {
+    if (hexXiang(KING_WEN_ORDER[i]) === s) return KING_WEN_ORDER[i];
+  }
+  return null;
+}
+
+/* 模糊候选排序：精确 → 卦名包含 → 卦象称谓包含 */
+function hexMatchCandidates(q) {
+  q = (q || '').trim();
+  if (!q) return [];
+  var exact = [], contains = [], xiang = [];
   for (var i = 0; i < KING_WEN_ORDER.length; i++) {
     var n = KING_WEN_ORDER[i];
-    var o1 = document.createElement('option');
-    o1.value = n; o1.textContent = n;
-    benSel.appendChild(o1);
-    var o2 = document.createElement('option');
-    o2.value = n; o2.textContent = n;
-    bianSel.appendChild(o2);
+    if (n === q) { exact.push(n); }
+    else if (n.indexOf(q) >= 0) { contains.push(n); }
+    else {
+      var x = hexXiang(n);
+      if (x && x.indexOf(q) >= 0) xiang.push(n);
+    }
   }
-  benSel.value = '';
-  bianSel.value = '';
+  return exact.concat(contains, xiang);
+}
+
+function highlightSub(text, q) {
+  var idx = text.indexOf(q);
+  if (idx < 0) return esc(text);
+  return esc(text.slice(0, idx)) + '<b>' + esc(q) + '</b>' + esc(text.slice(idx + q.length));
+}
+
+/* 文本框 + 候选中选（支持输入法键入、上下键选择、回车确认） */
+function setupHexAutocomplete(inputId, listId) {
+  var input = document.getElementById(inputId);
+  var list = document.getElementById(listId);
+  var active = -1, shown = [];
+
+  function hide() { list.classList.remove('show'); list.innerHTML = ''; active = -1; shown = []; }
+
+  function render() {
+    var q = input.value;
+    shown = hexMatchCandidates(q);
+    if (!shown.length) { hide(); return; }
+    var html = '';
+    for (var i = 0; i < shown.length; i++) {
+      var n = shown[i];
+      html += '<div class="ac-item' + (i === active ? ' active' : '') + '" data-i="' + i + '">'
+        + '<span>' + highlightSub(n, q) + '</span>'
+        + '<span class="ac-xiang">' + highlightSub(hexXiang(n), q) + '</span></div>';
+    }
+    list.innerHTML = html;
+    list.classList.add('show');
+  }
+
+  function choose(idx) {
+    if (idx < 0 || idx >= shown.length) return;
+    input.value = shown[idx];
+    hide();
+  }
+
+  input.addEventListener('input', function () { active = -1; render(); });
+  input.addEventListener('keydown', function (e) {
+    /* 输入法组字期间的回车交给输入法处理，避免误触发查询 */
+    if (e.isComposing || e.keyCode === 229) return;
+    if (list.classList.contains('show') && shown.length) {
+      if (e.key === 'ArrowDown') { e.preventDefault(); active = Math.min(active + 1, shown.length - 1); render(); return; }
+      if (e.key === 'ArrowUp') { e.preventDefault(); active = Math.max(active - 1, 0); render(); return; }
+      if (e.key === 'Enter') { e.preventDefault(); choose(active >= 0 ? active : 0); doQuery(); return; }
+      if (e.key === 'Escape') { hide(); return; }
+    }
+    if (e.key === 'Enter') doQuery();
+  });
+  input.addEventListener('focus', function () { active = -1; render(); });
+  input.addEventListener('blur', function () { setTimeout(hide, 150); });
+  list.addEventListener('mousedown', function (e) {
+    var t = e.target;
+    while (t && t !== list && !(t.classList && t.classList.contains('ac-item'))) t = t.parentNode;
+    if (t && t.classList && t.classList.contains('ac-item')) {
+      choose(parseInt(t.getAttribute('data-i'), 10));
+      e.preventDefault();
+    }
+  });
+}
+
+function setupQuery() {
+  setupHexAutocomplete('q-bengua', 'q-bengua-ac');
+  setupHexAutocomplete('q-biangua', 'q-biangua-ac');
   document.getElementById('btn-query').addEventListener('click', doQuery);
   var searchInput = document.getElementById('q-search');
   var timer = null;
@@ -482,9 +552,19 @@ function setupQuery() {
 /* 批次查询：本卦／之卦可留空。两者皆填查单一组合；
    仅填本卦或仅填之卦，或两者皆空时，列出所有符合条件的林辞。 */
 function doQuery() {
-  var ben = document.getElementById('q-bengua').value;
-  var bian = document.getElementById('q-biangua').value;
   var container = document.getElementById('query-result');
+  var benRaw = document.getElementById('q-bengua').value;
+  var bianRaw = document.getElementById('q-biangua').value;
+  var ben = resolveHexName(benRaw);
+  var bian = resolveHexName(bianRaw);
+  if (benRaw.trim() && ben === null) {
+    container.innerHTML = '<p class="warn">未识别本卦「' + esc(benRaw) + '」，请从候选中点选或输入正确卦名。</p>';
+    return;
+  }
+  if (bianRaw.trim() && bian === null) {
+    container.innerHTML = '<p class="warn">未识别之卦「' + esc(bianRaw) + '」，请从候选中点选或输入正确卦名。</p>';
+    return;
+  }
   if (ben && bian) { renderYiLinResult(ben, bian, container); return; }
   var data = window.YILIN_DATA || [];
   var hits = [];

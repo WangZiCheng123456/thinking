@@ -562,6 +562,37 @@ mark { background: #f3d478; color: #4a3308; border-radius: 2px; padding: 0 2px; 
   letter-spacing: .08em;
 }
 
+/* ---------- 查询输入自动补全 ---------- */
+.ac-wrap { position: relative; }
+.ac-list {
+  position: absolute;
+  top: calc(100% + 2px);
+  left: 0;
+  right: 0;
+  z-index: 30;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  box-shadow: 0 8px 18px rgba(138,109,47,.22);
+  max-height: 240px;
+  overflow-y: auto;
+  display: none;
+}
+.ac-list.show { display: block; }
+.ac-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 12px;
+  cursor: pointer;
+  font-size: 15px;
+  letter-spacing: .06em;
+}
+.ac-item b { color: var(--red); }
+.ac-item .ac-xiang { color: var(--ink-soft); font-size: 12px; letter-spacing: .04em; }
+.ac-item:hover, .ac-item.active { background: rgba(168,137,63,.14); }
+
 /* ---------- 保存 ---------- */
 .save-bar {
   display: flex;
@@ -707,6 +738,8 @@ mark { background: #f3d478; color: #4a3308; border-radius: 2px; padding: 0 2px; 
   .guide-num { flex: 0 0 32px; height: 32px; font-size: 15px; }
   .guide-body h3 { font-size: 16px; }
   .guide-body p, .guide-body li { font-size: 13px; }
+
+  .ac-list { max-height: 200px; }
 
   .save-bar { padding: 8px 10px; }
   .save-bar input { flex: 1 1 100%; }
